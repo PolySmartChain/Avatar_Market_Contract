@@ -4,145 +4,153 @@ pragma solidity 0.8.1;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token//ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-contract Market is EIP712("Market", "1"), Ownable{
+contract Market is EIP712("Market", "1"), Ownable {
 
     using ECDSA for bytes32;
     using SafeMath for uint256;
+
+    struct Sign {
+        address from;
+        address nft;
+        uint256 tokenId;
+        uint256 amount;
+        address token;
+        uint256 price;
+        uint256 timestamp;
+    }
+
     bytes32 private constant STRUCT_BUY =
-    keccak256("Buy(uint256 tokenId,uint256 price,uint256 payKind,uint256 timestamp)");
+        keccak256("Buy(address from,address nft,uint256 tokenId,uint256 amount,address token,uint256 price,uint256 timestamp)");
 
-    event Buy(uint256 indexed tokenId, address indexed benefit, address indexed seller, uint256 price, uint256 fee, uint256 payKind);
+    uint256 public expiredAfter = 30 days;
+    uint256 public fee = 500;
 
-    event CancelListing(address indexed owner, uint256 indexed tokenId, uint256 price, uint256 payKind);
+    bool public lock;
+    address payable public payAddr;
 
-    address public polyJetClub;
+    mapping(address => uint256) public nftMapping;// 0=null, 1=EIP721, 2=EIP1155
 
-    uint256 public expiredAfter;
+    mapping(bytes => bool) public signatureOff;
 
-    bool public disabled;
+    mapping(address => bool) public tokenMapping;// prc20
 
-    mapping(bytes => uint256) public _signatureOff;
+    event Buy(address indexed from, address indexed nft, uint256 tokenId, uint256 amount, address token, uint256 price, uint256 timestamp, address to);
+    event CancelList(address from, bytes signature);
 
-    mapping(uint256 => address) public _payCountTokenMapping;
-
-    mapping(address => uint256) public _payTokenCountMapping;
-
-    uint256 public payTokenCount = 1;
-
-    uint256 public _fee = 500;
-
-    address payable payAddr;
-
-    address public admin;
+    modifier locking() {
+        require(!lock, "Locking");
+        _;
+    }
 
     constructor(
-        address polyJetClub_,
-        uint256 expiredAfter_,
-        address payable addr_
-    ) {
-        polyJetClub = polyJetClub_;
-        expiredAfter = expiredAfter_;
-        transferOwnership(addr_);
-        payAddr = addr_;
+        address[] memory _nfts,
+        address[] memory _tokens,
+        address payable _payAddress
+    ) Ownable() {
+        for (uint256 i; i < _nfts.length; i++) {
+            nftMapping[_nfts[i]] = 1;
+        }
+        for (uint256 j; j < _tokens.length; j++) {
+            tokenMapping[_tokens[j]] = true;
+        }
+        payAddr = _payAddress;
     }
 
     function setExpiredAfter(uint256 e) external onlyOwner {
         expiredAfter = e;
     }
 
-    function setDisabled(bool b) external onlyOwner {
-        disabled = b;
+    function setLock(bool _lock) external onlyOwner {
+        lock = _lock;
     }
 
     function setPayAddr(address payable addr_) external onlyOwner {
         payAddr = addr_;
     }
 
-    function setAdmin(address addr_) external onlyOwner {
-        admin = addr_;
+    function setFee(uint256 _fee) external onlyOwner {
+        fee = _fee;
     }
 
-    function setFee(uint256 fee) external onlyOwner {
-        _fee = fee;
+    function setNFT(address _nft, uint256 state) external onlyOwner {
+        require(state < 3, "Abnormal nft address");
+        nftMapping[_nft] = state;
     }
 
-    function setPayToken(address payToken) external onlyOwner {
-        require(_payTokenCountMapping[payToken] < 1, "PAYTOKEN EXIST");
-        _payTokenCountMapping[payToken] = payTokenCount;
-        _payCountTokenMapping[payTokenCount] = payToken;
-        payTokenCount = payTokenCount.add(1);
+    function setPayToken(address payToken, bool state) external onlyOwner {
+        require(payToken != address(0), "Token is zero address");
+        tokenMapping[payToken] = state;
     }
 
-    function removePayToken(address payToken) external onlyOwner {
-        require(_payTokenCountMapping[payToken] >= 1, "PAYTOKEN NOT EXIST");
-        _payCountTokenMapping[_payTokenCountMapping[payToken]] = address(0);
-        _payTokenCountMapping[payToken] = 0;
-    }
+    function buy(
+        Sign calldata sign,
+        address to,
+        bytes calldata signature
+    ) external payable locking {
+        uint256 state = nftMapping[sign.nft];
+        require(state > 0, "Abnormal nft address");
+        require(!signatureOff[signature], "Signature already exist");
+        require(sign.from != to, "Repeat purchase");
+        require(sign.amount > 0 && sign.price > 0, "Parameter is zero");
+        require(block.timestamp >= sign.timestamp && block.timestamp - sign.timestamp <= expiredAfter, "Signature expired");
 
-    // 1. if user set approve for this contract
-    // 2. verify the signature
-    function buy(uint256 tokenId, uint256 price, uint256 timestamp, address to, uint256 payKind, bytes calldata signature) external payable {
-        require(_signatureOff[signature] != 1, "SIGN OFF");
-        require(!disabled, "DISABLED");
-        if(payKind == 0){
-            require(msg.value == price, "PRICE");
-        }
-        require(!Address.isContract(msg.sender) && !Address.isContract(to), "CONTRACT");
-        require(block.timestamp >= timestamp && block.timestamp - timestamp <= expiredAfter, "EXPIRED");
-        bytes32 d = _hashTypedDataV4(
+        bytes32 digest = _hashTypedDataV4(
             keccak256(
-                abi.encode(STRUCT_BUY, tokenId, price, payKind, timestamp)
+                abi.encode(STRUCT_BUY, sign.from, sign.nft, sign.tokenId, sign.amount, sign.token, sign.price, sign.timestamp)
             )
         );
-        address payable o = payable(IERC721(polyJetClub).ownerOf(tokenId));
-        require(o == d.recover(signature), "EC");
-        uint256 fee = price.mul(_fee).div(10000);
-        if(payKind == 0){
-            Address.sendValue(o, price.sub(fee));
-            Address.sendValue(payAddr, fee);
-        }else{
-            IERC20(_payCountTokenMapping[payKind]).transferFrom(msg.sender, o, price.sub(fee));
-            IERC20(_payCountTokenMapping[payKind]).transferFrom(msg.sender, payAddr, fee);
+        address signer = digest.recover(signature);
+        require(sign.from == signer, "Abnormal signature");
+
+        // fee
+        uint256 f = sign.price.mul(fee).div(10000);
+        uint256 income = sign.price.sub(f);
+        if (sign.token == address(0)) {// psc
+            require(msg.value == sign.price, "Abnormal price");
+            Address.sendValue(payable(sign.from), income);
+            Address.sendValue(payAddr, f);
+        } else {
+            IERC20(sign.token).transferFrom(msg.sender, sign.from, income);
+            IERC20(sign.token).transferFrom(msg.sender, payAddr, f);
         }
-        IERC721(polyJetClub).transferFrom(o, to, tokenId);
-        _signatureOff[signature] = 1;
-        emit Buy(tokenId, to, o, price, fee, payKind);
+
+        //nft
+        if (state == 1) {// erc721
+            IERC721(sign.nft).safeTransferFrom(sign.from, to, sign.tokenId);
+        } else {
+            IERC1155(sign.nft).safeTransferFrom(sign.from, to, sign.tokenId, sign.amount, "");
+        }
+
+        signatureOff[signature] = true;
+
+        emit Buy(sign.from, sign.nft, sign.tokenId, sign.amount, sign.token, sign.price, sign.timestamp, to);
     }
 
-    function cancelListing(uint256 tokenId, uint256 price, uint256 payKind, uint256 timestamp, bytes calldata signature) external {
-        require(_signatureOff[signature] != 1, "SIGN HAS OFF");
-        require(!disabled, "DISABLED");
-        bytes32 d = _hashTypedDataV4(
+    function cancelList(
+        Sign calldata sign,
+        bytes calldata signature
+    ) external locking {
+        require(sign.from == msg.sender, "");
+        require(!signatureOff[signature], "Signature already exist");
+
+        bytes32 digest = _hashTypedDataV4(
             keccak256(
-                abi.encode(STRUCT_BUY, tokenId, price, payKind, timestamp)
+                abi.encode(STRUCT_BUY, sign.from, sign.nft, sign.tokenId, sign.amount, sign.token, sign.price, sign.timestamp)
             )
         );
-        require(msg.sender == d.recover(signature), "EC");
-        _signatureOff[signature] = 1;
-        emit CancelListing(msg.sender, tokenId, price, payKind);
-    }
+        address signer = digest.recover(signature);
+        require(sign.from == signer, "Abnormal signature");
 
-    function isSignatureValid(uint256 tokenId, uint256 price, uint256 payKind, uint256 timestamp, address user, bytes calldata signature) public view returns (bool) {
-        if(_signatureOff[signature] == 1){
-            return false;
-        }
-        bytes32 d = _hashTypedDataV4(
-            keccak256(
-                abi.encode(STRUCT_BUY, tokenId, price, payKind, timestamp)
-            )
-        );
-        return user == d.recover(signature);
-    }
+        signatureOff[signature] = true;
 
-    function setSignatureOff(bytes calldata signature) external {
-        require(msg.sender == admin, "ADMIN ERROR");
-        _signatureOff[signature] = 1;
+        emit CancelList(sign.from, signature);
     }
-
 }
