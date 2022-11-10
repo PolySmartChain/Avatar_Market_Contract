@@ -37,7 +37,7 @@ contract Market is EIP712("Market", "1"), Ownable {
     bool public lock;
     address payable public payAddr;
 
-    mapping(address => uint256) nonces;
+    mapping(address => uint256) public nonces;
 
     mapping(address => uint256) public nftMapping;// 0=null, 1=EIP721, 2=EIP1155
 
@@ -48,6 +48,7 @@ contract Market is EIP712("Market", "1"), Ownable {
     event Buy(address indexed from, address indexed nft, uint256 tokenId, uint256 amount, address token, uint256 price, uint256 timestamp, address to);
     event CancelList(address from, bytes signature);
     event SetNFT(address nft, uint256 state);
+    event SetToken(address token, bool state);
 
     modifier locking() {
         require(!lock, "Locking");
@@ -94,6 +95,8 @@ contract Market is EIP712("Market", "1"), Ownable {
     function setPayToken(address payToken, bool state) external onlyOwner {
         require(payToken != address(0), "Token is zero address");
         tokenMapping[payToken] = state;
+
+        emit SetToken(payToken, state);
     }
 
     function buy(
