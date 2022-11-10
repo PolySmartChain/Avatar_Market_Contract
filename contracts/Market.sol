@@ -44,6 +44,7 @@ contract Market is EIP712("Market", "1"), Ownable {
 
     event Buy(address indexed from, address indexed nft, uint256 tokenId, uint256 amount, address token, uint256 price, uint256 timestamp, address to);
     event CancelList(address from, bytes signature);
+    event SetNFT(address nft, uint256 state);
 
     modifier locking() {
         require(!lock, "Locking");
@@ -83,6 +84,8 @@ contract Market is EIP712("Market", "1"), Ownable {
     function setNFT(address _nft, uint256 state) external onlyOwner {
         require(state < 3, "Abnormal nft address");
         nftMapping[_nft] = state;
+
+        emit SetNFT(_nft, state);
     }
 
     function setPayToken(address payToken, bool state) external onlyOwner {
