@@ -24,20 +24,17 @@ contract Market is EIP712("Market", "1"), Ownable {
         uint256 amount;
         address token;
         uint256 price;
-        uint256 nonce;
         uint256 timestamp;
     }
 
     bytes32 private constant STRUCT_BUY =
-        keccak256("Buy(address from,address nft,uint256 tokenId,uint256 amount,address token,uint256 price,uint256 nonce,uint256 timestamp)");
+        keccak256("Buy(address from,address nft,uint256 tokenId,uint256 amount,address token,uint256 price,uint256 timestamp)");
 
     uint256 public expiredAfter = 30 days;
     uint256 public fee = 500;
 
     bool public lock;
     address payable public payAddr;
-
-    mapping(address => uint256) public nonces;
 
     mapping(address => uint256) public nftMapping;// 0=null, 1=EIP721, 2=EIP1155
 
@@ -109,12 +106,11 @@ contract Market is EIP712("Market", "1"), Ownable {
         require(!signatureOff[signature], "Signature already exist");
         require(sign.from != to, "Repeat purchase");
         require(sign.amount > 0 && sign.price > 0, "Parameter is zero");
-        require(nonces[sign.from] == sign.nonce, "Abnormal nonce");
         require(block.timestamp >= sign.timestamp && block.timestamp - sign.timestamp <= expiredAfter, "Signature expired");
 
         bytes32 digest = _hashTypedDataV4(
             keccak256(
-                abi.encode(STRUCT_BUY, sign.from, sign.nft, sign.tokenId, sign.amount, sign.token, sign.price, sign.nonce, sign.timestamp)
+                abi.encode(STRUCT_BUY, sign.from, sign.nft, sign.tokenId, sign.amount, sign.token, sign.price, sign.timestamp)
             )
         );
         address signer = digest.recover(signature);
@@ -140,7 +136,6 @@ contract Market is EIP712("Market", "1"), Ownable {
         }
 
         signatureOff[signature] = true;
-        nonces[sign.from] = ++sign.nonce;
 
         emit Buy(sign.from, sign.nft, sign.tokenId, sign.amount, sign.token, sign.price, sign.timestamp, to);
     }
@@ -151,11 +146,10 @@ contract Market is EIP712("Market", "1"), Ownable {
     ) external locking {
         require(sign.from == msg.sender, "Incorrect signature owner");
         require(!signatureOff[signature], "Signature already exist");
-        require(nonces[sign.from] > sign.nonce, "Abnormal nonce");
 
         bytes32 digest = _hashTypedDataV4(
             keccak256(
-                abi.encode(STRUCT_BUY, sign.from, sign.nft, sign.tokenId, sign.amount, sign.token, sign.price, sign.nonce, sign.timestamp)
+                abi.encode(STRUCT_BUY, sign.from, sign.nft, sign.tokenId, sign.amount, sign.token, sign.price, sign.timestamp)
             )
         );
         address signer = digest.recover(signature);
