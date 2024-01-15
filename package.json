@@ -1,34 +1,42 @@
 {
-  "name": "Market-Contracts",
+  "name": "farms-v5-contracts",
   "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
     "compile": "hardhat compile",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "deploy:Goerli": "hardhat run ./scripts/deploy.ts --network Goerli"
   },
+  "author": "",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
-    "@openzeppelin/contracts": "4.6.0-rc.0",
+    "@openzeppelin/contracts": "4.8.0",
+    "@openzeppelin/contracts-upgradeable": "^4.8.0",
+    "@openzeppelin/hardhat-upgrades": "^1.21.0",
+    "@truffle/hdwallet-provider": "^1.5.0",
     "@types/chai": "^4.2.6",
     "@types/mocha": "^5.2.7",
     "chai": "^4.2.0",
-    "cross-env": "^7.0.0",
     "dotenv": "^8.2.0",
+    "eth-sig-util": "^3.0.1",
     "ethereum-waffle": "^3.3.0",
-    "ethers": "^5.0.32",
-    "hardhat": "^2.6.4",
+    "ethereumjs-util": "^7.1.5",
+    "ethers": "^5.5.4",
+    "hardhat": "^2.9.6",
     "hardhat-deploy": "^0.7.0-beta.50",
-    "live-server": "^1.2.1",
     "mocha": "^6.2.2",
+    "prettier": "^2.2.0",
     "rimraf": "^3.0.0",
-    "silly-datetime": "0.1.2",
+    "solc": "^0.8.12",
     "solidity-coverage": "^0.7.16",
-    "ts-node": "^9.1.1",
+    "ts-node": "^10.4.0",
     "typescript": "^3.7.3",
-    "prettier": "^2.2.0"
+    "web3": "^1.8.0"
   },
-  "dependencies": {
+  "devDependencies": {
     "@types/node": "^15.0.0"
   }
 }
