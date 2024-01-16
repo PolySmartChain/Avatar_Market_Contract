@@ -301,13 +301,76 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
 
     function getOrderList(address _nftToken, uint256 page, uint256 pageLimit) public view returns (orderInfo[] memory){
 
+        uint256 totalCount = orderIdList[_nftToken].length;
+        
+        if (pageLimit == 0 || page == 0 || totalCount == 0) {
+            return new orderInfo[](0);
+        }
+
+        uint256 start = (page - 1) * pageLimit;
+        uint256 end = start + pageLimit;
+        if (end > totalCount) {
+            end = totalCount;
+        }
+
+        orderInfo[] memory orders = new orderInfo[](end - start);
+
+        for (uint256 i = start; i < end; i++) {
+            uint256 orderId = orderIdList[_nftToken][i];
+            orders[i - start] = orderIdInfo[orderId];
+        }
+
+        return orders;
+
     }
 
     function getOrderListByTokenId(address _nftToken, uint256 _tokenId, uint256 page, uint256 pageLimit) public view returns (orderInfo[] memory){
 
+        uint256 totalCount = orderIdSearch[_nftToken][_tokenId].length;
+        
+        if (pageLimit == 0 || page == 0 || totalCount == 0) {
+            return new orderInfo[](0);
+        }
+
+        uint256 start = (page - 1) * pageLimit;
+        uint256 end = start + pageLimit;
+        if (end > totalCount) {
+            end = totalCount;
+        }
+
+        orderInfo[] memory orders = new orderInfo[](end - start);
+
+        for (uint256 i = start; i < end; i++) {
+            uint256 orderId = orderIdSearch[_nftToken][_tokenId][i];
+            orders[i - start] = orderIdInfo[orderId];
+        }
+
+        return orders;
+
     }
 
     function getUserOrder(address _user, uint256 page, uint256 pageLimit) public view returns (orderInfo[] memory){
+
+        uint256 totalCount = userOrder[_user].length;
+        
+        if (pageLimit == 0 || page == 0 || totalCount == 0) {
+            return new orderInfo[](0);
+        }
+
+        uint256 start = (page - 1) * pageLimit;
+        uint256 end = start + pageLimit;
+        if (end > totalCount) {
+            end = totalCount;
+        }
+
+        orderInfo[] memory orders = new orderInfo[](end - start);
+
+        for (uint256 i = start; i < end; i++) {
+            uint256 orderId = userOrder[_user][i];
+            orders[i - start] = orderIdInfo[orderId];
+        }
+
+        return orders;
 
     }
 
