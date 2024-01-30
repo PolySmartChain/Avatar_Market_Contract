@@ -1,0 +1,12 @@
+{
+  "id": 6999,
+  "network": "Custom",
+  "deployments": {
+    "0x2cef43cbdef56d9a886c6a087a8c030d977194e8": {
+      "date": "2024-01-29T03:55:57.987Z",
+      "contractName": "ExchangeCore",
+      "fork": "london",
+      "implementationAddress": "0x5b6A56C58193991d60E47F07420133C20cD3D4E6"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "id": "-",
+  "network": "VM",
+  "deployments": {
+    "0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8": {
+      "date": "2024-01-23T01:54:55.207Z",
+      "contractName": "ExchangeCore",
+      "implementationAddress": "0xd9145CCE52D386f254917e481eB44e9943F39138"
+    }
+  }
+}
