@@ -95,7 +95,7 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
     function putOnSale(orderParams calldata order) public nonReentrant{
 
         require(TokenDetector.isERC721(order.nftToken) || TokenDetector.isERC1155(order.nftToken) , "putOnSale: invalid nft address");
-        require(TokenDetector.isERC20(order.payToken) || order.payToken == address(0) , "putOnSale: invalid payToken address");
+        require(order.payToken == address(0) || TokenDetector.isERC20(order.payToken), "putOnSale: invalid payToken address");
         require(order.amount > 0 , "putOnSale: order amount = 0");
         require(order.price > 0 , "putOnSale: order price = 0");
 
@@ -213,7 +213,7 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
         require(orderIdExist[_orderId] , "updatePrice: orderId is not exist");
         orderInfo memory order = orderIdInfo[_orderId];
         require(order.seller == _msgSender() , "updatePrice: sender is not seller");
-        require(TokenDetector.isERC20(_payToken) || _payToken == address(0) , "updatePrice: invalid payToken address");
+        require(_payToken == address(0) || TokenDetector.isERC20(_payToken), "updatePrice: invalid payToken address");
 
         orderIdInfo[_orderId].payToken = _payToken;
         orderIdInfo[_orderId].price = _price;
