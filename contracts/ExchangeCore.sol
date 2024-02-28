@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.12;
+pragma solidity 0.8.1;
 
 import "./libs/TokenDetector.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -59,7 +59,7 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
 
     uint256 public fee; // 500 / 10000
     address public socialVault; // social vault address
-
+    uint256 public aaaaa;
 
     event PutOnSale(address indexed seller, uint256 orderId, address nftToken, uint256 tokenId, address payToken, uint256 price, uint256 amount, uint256 creationTime);
     event TakeOffSale(address indexed seller, uint256 orderId, uint256 takeOffTime);
@@ -239,7 +239,7 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
         uint256 income = order.price.sub(f);
 
         if (order.payToken == address(0)) {
-            // require(msg.value == order.price, "buy: abnormal price");
+            require(msg.value == order.price, "buy: abnormal price");
             Address.sendValue(payable(order.seller), income);
             Address.sendValue(payable(socialVault), f);
         } else {
