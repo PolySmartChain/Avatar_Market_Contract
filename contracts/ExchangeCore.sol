@@ -59,7 +59,6 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
 
     uint256 public fee; // 500 / 10000
     address public socialVault; // social vault address
-    uint256 public aaaaa;
 
     event PutOnSale(address indexed seller, uint256 orderId, address nftToken, uint256 tokenId, address payToken, uint256 price, uint256 amount, uint256 creationTime);
     event TakeOffSale(address indexed seller, uint256 orderId, uint256 takeOffTime);
