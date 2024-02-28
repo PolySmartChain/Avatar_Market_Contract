@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.1;
+pragma solidity 0.8.11;
 
 import "./libs/TokenDetector.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
