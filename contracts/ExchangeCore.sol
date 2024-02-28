@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.2;
 
 import "./libs/TokenDetector.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -238,7 +238,7 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
         uint256 income = order.price.sub(f);
 
         if (order.payToken == address(0)) {
-            require(msg.value == order.price, "buy: abnormal price");
+            // require(msg.value == order.price, "buy: abnormal price");
             Address.sendValue(payable(order.seller), income);
             Address.sendValue(payable(socialVault), f);
         } else {

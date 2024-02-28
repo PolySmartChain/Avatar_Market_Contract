@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.11;
+pragma solidity 0.8.2;
 
 library TokenDetector {
     // ERC165 Interface ID for ERC721: 0x80ac58cd

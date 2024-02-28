@@ -30,7 +30,7 @@
     "mocha": "^6.2.2",
     "prettier": "^2.2.0",
     "rimraf": "^3.0.0",
-    "solc": "^0.8.11",
+    "solc": "^0.8.2",
     "solidity-coverage": "^0.7.16",
     "ts-node": "^10.4.0",
     "typescript": "^3.7.3",
