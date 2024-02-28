@@ -28,6 +28,9 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
         uint256 price;  // selling price
         uint256 amount; // ERC721 = 1, ERC1155 = Multiple
         uint256 creationTime; // create timestamp
+        uint256 status; // 0 normal  1 takeOff  2 buy
+        address buyer; // buyer
+        uint256 updateTime; // takeOff / buy time
     }
 
     struct orderParams {
@@ -116,7 +119,10 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
         payToken: order.payToken,
         price: order.price,
         amount: order.amount,
-        creationTime: block.timestamp
+        creationTime: block.timestamp,
+        status: 0,
+        buyer: address(0),
+        updateTime: block.timestamp
         });
 
         orderIdList[order.nftToken].push(newOrder.orderId); // 添加订单id到对应nft订单列表数组里
@@ -194,9 +200,11 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
 
     function takeOffSale(uint256 _orderId) public nonReentrant{
         require(orderIdExist[_orderId] , "takeOffSale: orderId is not exist");
-        orderInfo memory order = orderIdInfo[_orderId];
+        orderInfo storage order = orderIdInfo[_orderId];
         require(order.seller == _msgSender() , "takeOffSale: sender is not seller");
 
+        order.status = 1;
+        order.updateTime = block.timestamp;
         deleteOrder(order);
 
         if(nftType[order.nftToken] == 1){
@@ -224,7 +232,7 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
 
     function buy(uint256 _orderId) public payable  nonReentrant{
         require(orderIdExist[_orderId] , "buy: orderId is not exist");
-        orderInfo memory order = orderIdInfo[_orderId];
+        orderInfo storage order = orderIdInfo[_orderId];
         require(order.seller != _msgSender() , "buy: sender is seller");
 
         uint256 f = order.price.mul(fee).div(10000);
@@ -244,6 +252,10 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
         }else {
             IERC1155(order.nftToken).safeTransferFrom(address(this), _msgSender(), order.tokenId, order.amount, "");
         }
+
+        order.status = 2;
+        order.buyer = msg.sender;
+        order.updateTime = block.timestamp;
 
         deleteOrder(order);
 
