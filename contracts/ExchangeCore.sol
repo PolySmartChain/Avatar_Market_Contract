@@ -87,6 +87,10 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
         socialVault = _addr;
     }
 
+    function withdraw(address _addr, uint256 _amount) public  onlyOwner{
+        require(address(this).balance >= _amount, "withdraw: insufficient balance");
+        Address.sendValue(payable(_addr), _amount);
+    }
 
     function generateUniqueOrderId(address seller) private returns (uint256) {
         counter++;
