@@ -237,7 +237,8 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
         uint256 income = order.price.sub(f);
 
         if (order.payToken == address(0)) {
-            // require(msg.value == order.price, "buy: abnormal price");
+            
+            require(address(this).balance >= order.price, "buy: abnormal price");
             Address.sendValue(payable(order.seller), income);
             Address.sendValue(payable(socialVault), address(this).balance);
                     
