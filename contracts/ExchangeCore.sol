@@ -87,11 +87,6 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
         socialVault = _addr;
     }
 
-    function withdraw(address _addr, uint256 _amount) public  onlyOwner{
-        require(address(this).balance >= _amount, "withdraw: insufficient balance");
-        Address.sendValue(payable(_addr), _amount);
-    }
-
     function generateUniqueOrderId(address seller) private returns (uint256) {
         counter++;
         return uint256(keccak256(abi.encodePacked(block.timestamp, seller, counter)));
@@ -244,12 +239,14 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
         if (order.payToken == address(0)) {
             // require(msg.value == order.price, "buy: abnormal price");
             Address.sendValue(payable(order.seller), income);
-            Address.sendValue(payable(socialVault), f);
+            Address.sendValue(payable(socialVault), address(this).balance);
+                    
         } else {
             IERC20(order.payToken).transferFrom(msg.sender, order.seller, income);
             IERC20(order.payToken).transferFrom(msg.sender, socialVault, f);
         }
 
+        
         if(nftType[order.nftToken] == 1){
             IERC721(order.nftToken).safeTransferFrom(address(this), _msgSender(), order.tokenId);
         }else {
