@@ -388,4 +388,42 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
     }
 
 
+    function initOnSale(orderInfo[] calldata orders) public onlyOwner{
+
+        for (uint256 i=0; i < orders.length; i++){
+            orderInfo memory order = orders[i];
+
+            orderInfo memory newOrder = orderInfo({
+            orderId: order.orderId,
+            nftToken: order.nftToken,
+            tokenId: order.tokenId,
+            seller: order.seller,
+            payToken: order.payToken,
+            price: order.price,
+            amount: order.amount,
+            creationTime: order.creationTime,
+            status: 0,
+            buyer: address(0),
+            updateTime: order.updateTime
+            });
+
+            orderIdList[order.nftToken].push(newOrder.orderId); // 添加订单id到对应nft订单列表数组里
+            orderIdInfo[newOrder.orderId] = newOrder; // 订单id对应的订单信息
+            userOrder[newOrder.seller].push(newOrder.orderId); // 添加用户拥有的订单id
+            orderIdExist[newOrder.orderId] = true; // 设置订单号存在
+
+            orderIdSearch[order.nftToken][order.tokenId].push(newOrder.orderId); // 添加订单id到指定nft根据tokenId搜索数组里
+
+            uint256 orderIdListLength = orderIdList[order.nftToken].length;
+            orderIdIndex[newOrder.orderId] = orderIdListLength - 1; // 设置订单id在对应的数组里的索引
+
+            uint256 userOrderLength = userOrder[newOrder.seller].length;
+            userOrderIndex[newOrder.orderId] = userOrderLength - 1; // 设置订单id在用户订单数组里的索引
+   
+            uint256 orderIdSearchLength = orderIdSearch[order.nftToken][order.tokenId].length;
+            searchIndex[newOrder.orderId] = orderIdSearchLength - 1; // 设置订单id在搜索订单数组里的索引
+
+        }
+
+    }
 }
