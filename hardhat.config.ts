@@ -11,14 +11,14 @@ export default {
     compilers: [
       {
          version: "0.8.2",
+         settings: {
+          optimizer: { enabled: true, runs: 200 },
+          evmVersion: 'istanbul',
+        }
       }
-    ],
-    settings: {
-      optimizer: { enabled: true, runs: 200 },
-      evmVersion: 'istanbul',
-    },
+    ]
   },
-  defaultNetwork: "Mumbai",
+  defaultNetwork: "Localhost",
   networks: {
     hardhat: {
         gas: 120000000,
@@ -36,7 +36,7 @@ export default {
        accounts: [process.env.PRIVATE_KEY]
     },
     Localhost: {
-      url: "http://192.168.8.40:9111/",
+      url: "http://192.168.8.40:8245/",
       accounts: [process.env.PRIVATE_KEY]
     }
   }

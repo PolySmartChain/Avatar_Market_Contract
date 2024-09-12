@@ -5,10 +5,17 @@ import path = require('path')
 
 //npx hardhat run scripts/deploy.ts
 
-export async function _deploy(id: string, name: string, args: any[]): Promise<Contract> {
-    const lib = await ethers.getContractFactory(name)
-    const r = await lib.deploy(...args)
-    return r
+const defaultGasOptions = {
+    gasLimit: 10000000,
+    gasPrice: '3000000000'
+};
+  
+export async function _deploy(id: string, name: string, args: any[], gasOptions = defaultGasOptions): Promise<Contract> {
+    const lib = await ethers.getContractFactory(name);
+    const r = await lib.deploy(...args, gasOptions);
+    await r.deployed(); // 等待部署完成
+    console.log(`${name} deployed at: ${r.address}`);
+    return r;
 }
 
 interface Data {
@@ -16,17 +23,23 @@ interface Data {
 }
 
 async function main() {
-    // const [signer] = await ethers.getSigners()
-    
-    let socialVault = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4"
+    const socialVault = "0x44f057bBfc00df47DCE08fD3D7E892943ae90Aac";
+    const owner = "0x73254a360C19e3608620d3CEd32eC3654F0ae520";
 
     let ret: Data = <any>{}
     const mcProxy = await ethers.getContractFactory("ExchangeCore")
-    ret.Market = await upgrades.deployProxy(mcProxy, [socialVault], {initializer: 'initialize'})
+    const deployOptions = {
+        initializer: 'initialize',
+        ...defaultGasOptions
+    };
+    ret.Market = await upgrades.deployProxy(mcProxy, [socialVault], deployOptions)
     const market = await ret.Market.deployed()
     console.log(ret.Market.address, " ExchangeCore(proxy) address")
     console.log(await upgrades.erc1967.getImplementationAddress(ret.Market.address), " getImplementationAddress")
-
+    
+    await market.transferOwnership(owner,{
+        ...defaultGasOptions
+    })
    
     console.log({
         Market: market.address,
