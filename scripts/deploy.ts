@@ -2,6 +2,7 @@ import { ethers, upgrades } from 'hardhat'
 import { Contract, BigNumber, utils} from 'ethers'
 import fs = require('fs')
 import path = require('path')
+import { check } from 'prettier';
 
 //npx hardhat run scripts/deploy.ts
 
@@ -25,6 +26,10 @@ interface Data {
 async function main() {
     const socialVault = "0x44f057bBfc00df47DCE08fD3D7E892943ae90Aac";
     const owner = "0x73254a360C19e3608620d3CEd32eC3654F0ae520";
+    const polyjebClub = "0x63f158Eb42a417Aa8CA43F775b221161f391783b";
+
+    const checker = await _deploy('TokenExistenceChecker', 'TokenExistenceChecker', [polyjebClub])
+
 
     let ret: Data = <any>{}
     const mcProxy = await ethers.getContractFactory("ExchangeCore")
@@ -42,6 +47,7 @@ async function main() {
     })
    
     console.log({
+        TokenExistenceChecker: checker.address,
         Market: market.address,
     })
 }
