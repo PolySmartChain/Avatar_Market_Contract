@@ -42,9 +42,9 @@ async function main() {
     console.log(ret.Market.address, " ExchangeCore(proxy) address")
     console.log(await upgrades.erc1967.getImplementationAddress(ret.Market.address), " getImplementationAddress")
     
-    await market.transferOwnership(owner,{
-        ...defaultGasOptions
-    })
+    // await market.transferOwnership(owner,{
+    //     ...defaultGasOptions
+    // })
    
     console.log({
         TokenExistenceChecker: checker.address,
