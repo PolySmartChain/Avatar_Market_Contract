@@ -25,7 +25,7 @@ interface Data {
 
 async function main() {
     const socialVault = "0x44f057bBfc00df47DCE08fD3D7E892943ae90Aac";
-    const owner = "0x73254a360C19e3608620d3CEd32eC3654F0ae520";
+    const owner = "0xCDE422c51A9af810fbbEf840AE19E6b708377dD3";
     const polyjebClub = "0x63f158Eb42a417Aa8CA43F775b221161f391783b";
 
     const checker = await _deploy('TokenExistenceChecker', 'TokenExistenceChecker', [polyjebClub])
@@ -42,9 +42,9 @@ async function main() {
     console.log(ret.Market.address, " ExchangeCore(proxy) address")
     console.log(await upgrades.erc1967.getImplementationAddress(ret.Market.address), " getImplementationAddress")
     
-    // await market.transferOwnership(owner,{
-    //     ...defaultGasOptions
-    // })
+    await market.transferOwnership(owner,{
+        ...defaultGasOptions
+    })
    
     console.log({
         TokenExistenceChecker: checker.address,
