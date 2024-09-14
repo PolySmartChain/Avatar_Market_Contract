@@ -393,6 +393,12 @@ contract ExchangeCore is OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpg
         for (uint256 i=0; i < orders.length; i++){
             orderInfo memory order = orders[i];
 
+            if (TokenDetector.isERC721(order.nftToken)){
+                nftType[order.nftToken] = 1;
+            }else {
+                nftType[order.nftToken] = 2;
+            }
+
             orderInfo memory newOrder = orderInfo({
             orderId: order.orderId,
             nftToken: order.nftToken,
